@@ -188,7 +188,8 @@ export default function App() {
           <motion.h1 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="text-2xl font-extrabold tracking-tighter bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="text-2xl font-extrabold tracking-tighter bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent cursor-pointer active:scale-95 transition-transform"
           >
             KETUT PENA PALINTINA
           </motion.h1>
