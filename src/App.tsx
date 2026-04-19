@@ -35,7 +35,10 @@ import {
   Clock,
   Facebook,
   Music,
-  Search
+  Search,
+  Send,
+  User,
+  Mail
 } from "lucide-react";
 
 const projects = [
@@ -140,6 +143,7 @@ const staggerContainer = {
 export default function App() {
   const [activeCategory, setActiveCategory] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<typeof projects[0] | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -838,12 +842,19 @@ export default function App() {
                 Tersedia untuk proyek fotografi, konsultasi bisnis digital, atau layanan teknis smartphone. Mari ciptakan sesuatu yang luar biasa.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                <a 
-                  href="https://wa.me/6285829750779" 
+                <button 
+                  onClick={() => setIsContactModalOpen(true)}
                   className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-12 py-5 rounded-2xl font-bold transition-all flex items-center justify-center gap-3 shadow-xl shadow-blue-900/20 active:scale-95"
                 >
-                  <MessageSquare className="w-5 h-5" />
-                  Hubungi via WhatsApp
+                  <Zap className="w-5 h-5 text-yellow-400" />
+                  Mulai Konsultasi
+                </button>
+                <a 
+                  href="https://wa.me/6285829750779" 
+                  className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white px-12 py-5 rounded-2xl font-bold transition-all flex items-center justify-center gap-3 backdrop-blur-sm active:scale-95 border border-white/10"
+                >
+                  <MessageSquare className="w-5 h-5 text-green-400" />
+                  WhatsApp
                 </a>
                 <a 
                   href="https://www.instagram.com/ketut_vena?igsh=MWIzd2thams1Z3lydQ%3D%3D&utm_source=qr" 
@@ -1063,12 +1074,12 @@ export default function App() {
                     <p className="text-blue-100 mb-6 text-sm leading-relaxed">
                       Kami dapat membantu Anda mencapai hasil serupa untuk bisnis atau proyek pribadi Anda.
                     </p>
-                    <a 
-                      href="https://wa.me/6285829750779"
+                    <button 
+                      onClick={() => setIsContactModalOpen(true)}
                       className="w-full bg-white text-blue-600 py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-3 hover:bg-blue-50 active:scale-95"
                     >
                       Mulai Konsultasi
-                    </a>
+                    </button>
                   </div>
 
                   {selectedProject.link && (
@@ -1083,6 +1094,105 @@ export default function App() {
                     </a>
                   )}
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isContactModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6 bg-slate-900/95 backdrop-blur-xl"
+            onClick={() => setIsContactModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header with Background Pattern */}
+              <div className="h-3 bg-blue-600 w-full"></div>
+              
+              <div className="p-8 sm:p-12">
+                <button 
+                  onClick={() => setIsContactModalOpen(false)}
+                  className="absolute top-6 right-6 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all active:scale-95"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+
+                <div className="text-center mb-10">
+                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <MessageSquare className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">Mulai Konsultasi</h3>
+                  <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Punya ide atau proyek luar biasa? Mari kita bicarakan detailnya.
+                  </p>
+                </div>
+
+                <form 
+                  className="space-y-6"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    // Just close for demo
+                    setIsContactModalOpen(false);
+                  }}
+                >
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Nama Lengkap</label>
+                    <div className="relative">
+                      <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input 
+                        type="text" 
+                        required
+                        placeholder="John Doe"
+                        className="w-full pl-14 pr-6 py-4 bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-600/20 focus:bg-white dark:focus:bg-slate-800 rounded-2xl text-slate-900 dark:text-white transition-all outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Email</label>
+                    <div className="relative">
+                      <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input 
+                        type="email" 
+                        required
+                        placeholder="john@example.com"
+                        className="w-full pl-14 pr-6 py-4 bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-600/20 focus:bg-white dark:focus:bg-slate-800 rounded-2xl text-slate-900 dark:text-white transition-all outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Kebutuhan Proyek</label>
+                    <textarea 
+                      required
+                      placeholder="Ceritakan sedikit tentang proyek Anda..."
+                      rows={4}
+                      className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-600/20 focus:bg-white dark:focus:bg-slate-800 rounded-2xl text-slate-900 dark:text-white transition-all outline-none resize-none"
+                    ></textarea>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-bold transition-all shadow-xl shadow-blue-900/20 active:scale-95 flex items-center justify-center gap-3 group"
+                  >
+                    Kirim Permintaan
+                    <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                  </button>
+                  
+                  <p className="text-center text-[10px] text-slate-400">
+                    Biasanya saya merespons dalam waktu kurang dari 24 jam.
+                  </p>
+                </form>
               </div>
             </motion.div>
           </motion.div>
