@@ -846,7 +846,7 @@ export default function App() {
                   Hubungi via WhatsApp
                 </a>
                 <a 
-                  href="https://www.instagram.com/galleryvena_?igsh=Z2wzZXpqeHUzajBv" 
+                  href="https://www.instagram.com/ketut_vena?igsh=MWIzd2thams1Z3lydQ%3D%3D&utm_source=qr" 
                   className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white px-12 py-5 rounded-2xl font-bold transition-all flex items-center justify-center gap-3 backdrop-blur-sm active:scale-95"
                 >
                   <Instagram className="w-5 h-5" />
@@ -887,7 +887,7 @@ export default function App() {
           </p>
           <div className="flex items-center gap-4">
             <a 
-              href="https://www.instagram.com/galleryvena_?igsh=Z2wzZXpqeHUzajBv" 
+              href="https://www.instagram.com/ketut_vena?igsh=MWIzd2thams1Z3lydQ%3D%3D&utm_source=qr" 
               target="_blank" 
               rel="noopener noreferrer"
               className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
