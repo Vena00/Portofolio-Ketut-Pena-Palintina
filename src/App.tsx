@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Camera, 
@@ -38,7 +38,9 @@ import {
   Search,
   Send,
   User,
-  Mail
+  Mail,
+  ZoomIn,
+  Maximize2
 } from "lucide-react";
 
 const projects = [
@@ -140,10 +142,82 @@ const staggerContainer = {
   }
 };
 
+const AnimatedText = ({ text, className, delay = 0, once = true }: { text: string, className?: string, delay?: number, once?: boolean }) => {
+  return (
+    <p className={className}>
+      {text.split(" ").map((word, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: delay + (i * 0.03) }}
+          viewport={{ once }}
+          className="inline-block mr-1"
+        >
+          {word}
+        </motion.span>
+      ))}
+    </p>
+  );
+};
+
 export default function App() {
   const [activeCategory, setActiveCategory] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const initialFocusRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (isContactModalOpen) {
+      // Store the element that had focus before opening the modal
+      triggerRef.current = document.activeElement as HTMLElement;
+      // Small delay to ensure the modal is rendered and visible before focusing
+      const timeout = setTimeout(() => {
+        initialFocusRef.current?.focus();
+      }, 50);
+
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setIsContactModalOpen(false);
+      };
+
+      // Trap focus logic
+      const handleTab = (e: KeyboardEvent) => {
+        if (e.key !== 'Tab' || !modalRef.current) return;
+        
+        const focusableElements = modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+        if (e.shiftKey) { // Shift + Tab
+          if (document.activeElement === firstElement) {
+            lastElement.focus();
+            e.preventDefault();
+          }
+        } else { // Tab
+          if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
+          }
+        }
+      };
+
+      window.addEventListener('keydown', handleEscape);
+      window.addEventListener('keydown', handleTab);
+      
+      return () => {
+        window.removeEventListener('keydown', handleEscape);
+        window.removeEventListener('keydown', handleTab);
+        clearTimeout(timeout);
+        // Restore focus when modal closes
+        triggerRef.current?.focus();
+      };
+    }
+  }, [isContactModalOpen]);
   const [selectedProject, setSelectedProject] = useState<typeof projects[0] | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -277,18 +351,17 @@ export default function App() {
               transition={{ delay: 0.2 }}
               className="text-4xl md:text-6xl font-extrabold mb-8 leading-[1.1] tracking-tight text-slate-900 dark:text-white"
             >
-              Mendorong <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">Inovasi</span> <br />
-              Melalui <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">Solusi Digital</span>.
+              {"Mendorong ".split("").map((c, i) => <motion.span key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 + i * 0.05 }}>{c}</motion.span>)}
+              <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent px-1">Inovasi</span> <br />
+              {"Melalui ".split("").map((c, i) => <motion.span key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 + i * 0.05 }}>{c}</motion.span>)}
+              <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent px-1">Solusi Digital</span>.
             </motion.h2>
             
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+            <AnimatedText 
+              text="Berbasis di Mataram, NTB. Mengelola ekosistem layanan digital dan teknis sambil menempuh pendidikan di bidang Teknik Mesin."
               className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed"
-            >
-              Berbasis di Mataram, NTB. Mengelola ekosistem layanan digital dan teknis sambil menempuh pendidikan di bidang Teknik Mesin.
-            </motion.p>
+              delay={0.8}
+            />
             
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -312,20 +385,24 @@ export default function App() {
           <div className="container mx-auto px-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
               <motion.div 
-                variants={fadeIn}
+                variants={staggerContainer}
                 initial="initial"
                 whileInView="animate"
                 viewport={{ once: true }}
               >
                 <div className="flex flex-col sm:flex-row items-start gap-8 mb-8">
-                  <a 
+                  <motion.a 
+                    variants={fadeIn}
                     href="https://ibb.co.com/MkP4fXFD" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="relative flex-shrink-0 block group"
                   >
                     <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-violet-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                    <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-white dark:border-slate-800 shadow-xl bg-slate-100 dark:bg-slate-800">
+                    <motion.div 
+                      whileHover={{ scale: 1.05 }}
+                      className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-white dark:border-slate-800 shadow-xl bg-slate-100 dark:bg-slate-800"
+                    >
                       <img 
                         src="https://i.ibb.co.com/MkP4fXFD/Foto-Profil.jpg" 
                         alt="Ketut Pena Palintina" 
@@ -335,24 +412,81 @@ export default function App() {
                           (e.target as HTMLImageElement).src = "https://picsum.photos/seed/profile/400/400";
                         }}
                       />
-                    </div>
-                  </a>
-                  <div>
-                    <h3 className="text-3xl font-bold mb-2 flex items-center gap-3 text-slate-900 dark:text-white">
+                    </motion.div>
+                  </motion.a>
+                  <motion.div variants={fadeIn}>
+                    <h3 id="about-title" className="text-3xl font-bold mb-2 flex items-center gap-3 text-slate-900 dark:text-white">
                       <span className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center">
                         <Briefcase className="w-5 h-5" />
                       </span>
                       Tentang Saya
                     </h3>
-                    <p className="text-blue-600 dark:text-blue-400 font-bold text-sm uppercase tracking-widest">Personal Profile</p>
-                  </div>
+                    <div className="flex gap-[0.2em]">
+                      {"Personal Profile".split("").map((char, i) => (
+                        <motion.span
+                          key={i}
+                          initial={{ opacity: 0 }}
+                          whileInView={{ opacity: 1 }}
+                          transition={{ duration: 0.1, delay: i * 0.05 }}
+                          viewport={{ once: true }}
+                          className="text-blue-600 dark:text-blue-400 font-bold text-sm uppercase tracking-widest inline-block"
+                        >
+                          {char === " " ? "\u00A0" : char}
+                        </motion.span>
+                      ))}
+                    </div>
+                  </motion.div>
                 </div>
-                <p className="text-slate-600 dark:text-slate-400 mb-8 text-lg leading-relaxed">
-                  Lahir pada 14 Februari 2006 di Selelos, Lombok Utara, saya adalah individu yang dinamis dengan latar belakang <span className="font-bold text-slate-900 dark:text-white">Teknik Bisnis dan Sepeda Motor (Lulus 2024)</span>. Saat ini, saya memperdalam kompetensi teknis di <span className="font-bold text-slate-900 dark:text-white">Prodi Teknik Mesin, Universitas Mataram</span>.
-                </p>
+                <motion.p 
+                  variants={fadeIn}
+                  className="text-slate-600 dark:text-slate-400 mb-8 text-lg leading-relaxed overflow-hidden"
+                >
+                  {"Lahir pada 14 Februari 2006 di Selelos, Lombok Utara, saya adalah individu yang dinamis dengan latar belakang ".split(" ").map((word, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: i * 0.03 }}
+                      viewport={{ once: true }}
+                      className="inline-block mr-1"
+                    >
+                      {word}
+                    </motion.span>
+                  ))}
+                  <motion.span
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 30 * 0.03 }}
+                    viewport={{ once: true }}
+                    className="inline-block"
+                  >
+                    <span className="font-bold text-slate-900 dark:text-white">Teknik Bisnis dan Sepeda Motor (Lulus 2024)</span>
+                  </motion.span>
+                  {" . Saat ini, saya memperdalam kompetensi teknis di ".split(" ").map((word, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: (i + 35) * 0.03 }}
+                      viewport={{ once: true }}
+                      className="inline-block mr-1"
+                    >
+                      {word}
+                    </motion.span>
+                  ))}
+                  <motion.span
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 45 * 0.03 }}
+                    viewport={{ once: true }}
+                    className="inline-block"
+                  >
+                    <span className="font-bold text-slate-900 dark:text-white">Prodi Teknik Mesin, Universitas Mataram</span>.
+                  </motion.span>
+                </motion.p>
                 
                 <div className="space-y-6">
-                  <a href="#business" className="block">
+                  <motion.a variants={fadeIn} href="#business" className="block">
                     <div className="flex items-start gap-5 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-800 transition-all group cursor-pointer">
                       <div className="w-12 h-12 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-sm dark:shadow-none group-hover:scale-110 transition-transform">
                         <Zap className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -366,9 +500,9 @@ export default function App() {
                         </div>
                       </div>
                     </div>
-                  </a>
+                  </motion.a>
 
-                  <a href="#business" className="block">
+                  <motion.a variants={fadeIn} href="#business" className="block">
                     <div className="flex items-start gap-5 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-800 transition-all group cursor-pointer">
                       <div className="w-12 h-12 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-sm dark:shadow-none group-hover:scale-110 transition-transform">
                         <Hotel className="w-6 h-6 text-slate-400" />
@@ -382,9 +516,10 @@ export default function App() {
                         </div>
                       </div>
                     </div>
-                  </a>
+                  </motion.a>
 
                   <motion.div 
+                    variants={fadeIn}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="pt-4"
@@ -406,17 +541,17 @@ export default function App() {
 
               <motion.div 
                 id="experience"
-                variants={fadeIn}
+                variants={staggerContainer}
                 initial="initial"
                 whileInView="animate"
                 viewport={{ once: true }}
               >
-                <h3 className="text-3xl font-bold mb-10 flex items-center gap-3 text-slate-900 dark:text-white">
+                <motion.h3 variants={fadeIn} className="text-3xl font-bold mb-10 flex items-center gap-3 text-slate-900 dark:text-white">
                   <span className="w-10 h-10 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded-xl flex items-center justify-center">
                     <GraduationCap className="w-5 h-5" />
                   </span>
                   Riwayat & Kesibukan
-                </h3>
+                </motion.h3>
                 
                 <div className="space-y-12 relative before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100 dark:before:bg-slate-800">
                   {[
@@ -439,7 +574,7 @@ export default function App() {
                       active: false
                     }
                   ].map((item, index) => (
-                    <div key={index} className="relative pl-12 group">
+                    <motion.div variants={fadeIn} key={index} className="relative pl-12 group">
                       <div className={`absolute left-0 top-1.5 w-10 h-10 rounded-full border-4 border-white dark:border-slate-900 flex items-center justify-center z-10 transition-colors ${item.active ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-800 group-hover:bg-slate-300 dark:group-hover:bg-slate-700'}`}>
                         {item.active && <div className="w-2 h-2 bg-white rounded-full animate-pulse" />}
                       </div>
@@ -447,8 +582,12 @@ export default function App() {
                       <p className={`text-sm font-semibold uppercase tracking-wide mb-2 ${item.active ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'}`}>
                         {item.subtitle}
                       </p>
-                      <p className="text-slate-500 dark:text-slate-400 leading-relaxed italic">{item.desc}</p>
-                    </div>
+                      <AnimatedText 
+                        text={item.desc}
+                        className="text-slate-500 dark:text-slate-400 leading-relaxed italic"
+                        delay={0.3}
+                      />
+                    </motion.div>
                   ))}
                 </div>
               </motion.div>
@@ -459,13 +598,20 @@ export default function App() {
         {/* Skills Section */}
         <section id="skills" className="py-24 bg-white dark:bg-slate-900 transition-colors duration-300">
           <div className="container mx-auto px-6">
-            <div className="text-center max-w-3xl mx-auto mb-20">
+            <motion.div 
+              variants={fadeIn}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true }}
+              className="text-center max-w-3xl mx-auto mb-20"
+            >
               <h3 className="text-4xl font-bold mb-6 text-slate-900 dark:text-white">Keahlian & Kompetensi</h3>
               <div className="h-1.5 w-24 bg-blue-600 mx-auto rounded-full mb-8"></div>
-              <p className="text-slate-600 dark:text-slate-400 text-lg">
-                Kombinasi antara pemahaman teknis yang mendalam dan kreativitas digital untuk memberikan solusi terbaik.
-              </p>
-            </div>
+              <AnimatedText 
+                text="Kombinasi antara pemahaman teknis yang mendalam dan kreativitas digital untuk memberikan solusi terbaik."
+                className="text-slate-600 dark:text-slate-400 text-lg"
+              />
+            </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
               {/* Technical Skills */}
@@ -500,7 +646,12 @@ export default function App() {
                         <motion.div 
                           initial={{ width: 0 }}
                           whileInView={{ width: `${skill.level}%` }}
-                          transition={{ duration: 1, delay: 0.2 }}
+                          transition={{ 
+                            type: "spring", 
+                            stiffness: 50, 
+                            damping: 20, 
+                            delay: 0.2 + index * 0.1 
+                          }}
                           viewport={{ once: true }}
                           className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full"
                         />
@@ -508,6 +659,15 @@ export default function App() {
                     </div>
                   ))}
                 </div>
+
+                <motion.button
+                  whileHover={{ x: 5 }}
+                  onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="mt-12 flex items-center gap-3 text-blue-600 dark:text-blue-400 font-bold hover:gap-5 transition-all group"
+                >
+                  Mulai Konsultasi Teknis
+                  <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </motion.button>
               </motion.div>
 
               {/* Creative Skills */}
@@ -542,7 +702,12 @@ export default function App() {
                         <motion.div 
                           initial={{ width: 0 }}
                           whileInView={{ width: `${skill.level}%` }}
-                          transition={{ duration: 1, delay: 0.2 }}
+                          transition={{ 
+                            type: "spring", 
+                            stiffness: 50, 
+                            damping: 20, 
+                            delay: 0.2 + index * 0.1 
+                          }}
                           viewport={{ once: true }}
                           className="h-full bg-gradient-to-r from-violet-600 to-violet-400 rounded-full"
                         />
@@ -550,6 +715,15 @@ export default function App() {
                     </div>
                   ))}
                 </div>
+
+                <motion.button
+                  whileHover={{ x: 5 }}
+                  onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="mt-12 flex items-center gap-3 text-violet-600 dark:text-violet-400 font-bold hover:gap-5 transition-all group"
+                >
+                  Mulai Konsultasi Kreatif
+                  <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </motion.button>
               </motion.div>
             </div>
           </div>
@@ -558,13 +732,20 @@ export default function App() {
         {/* Business Units Section */}
         <section id="business" className="py-24 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
           <div className="container mx-auto px-6">
-            <div className="text-center max-w-3xl mx-auto mb-20">
+            <motion.div 
+              variants={fadeIn}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true }}
+              className="text-center max-w-3xl mx-auto mb-20"
+            >
               <h3 className="text-4xl font-bold mb-6 text-slate-900 dark:text-white">Unit Bisnis & Keahlian</h3>
               <div className="h-1.5 w-24 bg-blue-600 mx-auto rounded-full mb-8"></div>
-              <p className="text-slate-600 dark:text-slate-400 text-lg">
-                Ekosistem layanan yang saya bangun untuk menjawab berbagai kebutuhan digital dan teknis masyarakat di Lombok.
-              </p>
-            </div>
+              <AnimatedText 
+                text="Ekosistem layanan yang saya bangun untuk menjawab berbagai kebutuhan digital dan teknis masyarakat di Lombok."
+                className="text-slate-600 dark:text-slate-400 text-lg"
+              />
+            </motion.div>
 
             <motion.div 
               variants={staggerContainer}
@@ -624,7 +805,11 @@ export default function App() {
                     </div>
                     <h4 className="font-bold text-2xl mb-2 text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{biz.name}</h4>
                     <p className="text-sm text-blue-600 dark:text-blue-400 font-bold italic mb-4 tracking-wide">{biz.tagline}</p>
-                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{biz.desc}</p>
+                    <AnimatedText 
+                      text={biz.desc}
+                      className="text-slate-600 dark:text-slate-400 leading-relaxed"
+                      delay={0.1 * index}
+                    />
                   </motion.div>
                 </a>
               ))}
@@ -635,17 +820,24 @@ export default function App() {
         {/* Projects Section */}
         <section id="projects" className="py-24 bg-white dark:bg-slate-900 transition-colors duration-300">
           <div className="container mx-auto px-6">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            <motion.div 
+              variants={fadeIn}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true }}
+              className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6"
+            >
               <div className="max-w-2xl">
-                <h3 className="text-3xl font-bold mb-4 flex items-center gap-3 text-slate-900 dark:text-white">
+                <h3 id="projects-title" className="text-3xl font-bold mb-4 flex items-center gap-3 text-slate-900 dark:text-white">
                   <span className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center">
                     <Folder className="w-5 h-5" />
                   </span>
                   Portofolio Karya
                 </h3>
-                <p className="text-slate-500 dark:text-slate-400 text-lg">
-                  Beberapa proyek pilihan yang mencerminkan dedikasi saya dalam bidang teknologi, kreativitas, dan teknik.
-                </p>
+                <AnimatedText 
+                  text="Beberapa proyek pilihan yang mencerminkan dedikasi saya dalam bidang teknologi, kreativitas, dan teknik."
+                  className="text-slate-500 dark:text-slate-400 text-lg"
+                />
               </div>
               <div className="flex flex-col gap-6 items-end w-full md:w-auto">
                 <div className="relative w-full max-w-md">
@@ -658,24 +850,32 @@ export default function App() {
                     className="w-full pl-12 pr-6 py-3 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-blue-600 transition-all"
                   />
                 </div>
-                <div className="flex flex-wrap gap-3 justify-end">
+                <div className="flex flex-wrap gap-3 justify-end relative">
                   {categories.map((cat) => {
                     const count = cat === "Semua" 
                       ? projects.length 
                       : projects.filter(p => p.category === cat).length;
+                    const isActive = activeCategory === cat;
                     return (
                       <button
                         key={cat}
                         onClick={() => setActiveCategory(cat)}
-                        className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2.5 ${
-                          activeCategory === cat 
-                            ? "bg-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-none" 
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                        className={`relative px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2.5 z-10 ${
+                          isActive 
+                            ? "text-white" 
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                         }`}
                       >
+                        {isActive && (
+                          <motion.div 
+                            layoutId="activeCategory"
+                            className="absolute inset-0 bg-blue-600 rounded-full -z-10 shadow-lg shadow-blue-200 dark:shadow-none"
+                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                          />
+                        )}
                         {cat}
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
-                          activeCategory === cat ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-500"
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-black transition-colors ${
+                          isActive ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-500"
                         }`}>
                           {count}
                         </span>
@@ -684,74 +884,91 @@ export default function App() {
                   })}
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             <motion.div 
               layout
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
             >
               <AnimatePresence mode="popLayout">
-                {filteredProjects.map((project) => (
-                  <motion.div 
-                    key={project.title}
-                    layout
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    whileHover={{ y: -12 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setSelectedProject(project)}
-                    transition={{ duration: 0.4 }}
-                    className="group cursor-pointer bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-50 dark:border-slate-800/50 hover:border-blue-100 dark:hover:border-blue-900/30 hover:shadow-2xl hover:shadow-blue-900/10 transition-all"
-                  >
-                    <div className="relative overflow-hidden rounded-[1.8rem] mb-6 aspect-[4/3]">
-                      <img 
-                        src={project.image} 
-                        alt={project.title} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-8">
-                        <span className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest">
-                          Lihat Detail
-                        </span>
-                        <div className="flex gap-2">
-                          <button 
-                            onClick={(e) => handleShare(e, project, 'twitter')}
-                            className="p-2 bg-white/10 hover:bg-white/30 backdrop-blur-md text-white rounded-full transition-all"
-                            title="Share on Twitter"
-                          >
-                            <Twitter className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={(e) => handleShare(e, project, 'linkedin')}
-                            className="p-2 bg-white/10 hover:bg-white/30 backdrop-blur-md text-white rounded-full transition-all"
-                            title="Share on LinkedIn"
-                          >
-                            <Linkedin className="w-4 h-4" />
-                          </button>
+                {filteredProjects.length > 0 ? (
+                  filteredProjects.map((project) => (
+                    <motion.div 
+                      key={project.title}
+                      layout
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      whileHover={{ y: -12 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setSelectedProject(project)}
+                      transition={{ 
+                        layout: { duration: 0.4, ease: "easeInOut" },
+                        opacity: { duration: 0.3 }
+                      }}
+                      className="group cursor-pointer bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-50 dark:border-slate-800/50 hover:border-blue-100 dark:hover:border-blue-900/30 hover:shadow-2xl hover:shadow-blue-900/10 transition-all"
+                    >
+                      <div className="relative overflow-hidden rounded-[1.8rem] mb-6 aspect-[4/3]">
+                        <img 
+                          src={project.image} 
+                          alt={project.title} 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-8">
+                          <span className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest">
+                            Lihat Detail
+                          </span>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={(e) => handleShare(e, project, 'twitter')}
+                              className="p-2 bg-white/10 hover:bg-white/30 backdrop-blur-md text-white rounded-full transition-all"
+                              title="Share on Twitter"
+                            >
+                              <Twitter className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={(e) => handleShare(e, project, 'linkedin')}
+                              className="p-2 bg-white/10 hover:bg-white/30 backdrop-blur-md text-white rounded-full transition-all"
+                              title="Share on LinkedIn"
+                            >
+                              <Linkedin className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
+                      <div className="px-1">
+                        <span className="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-widest mb-2 block">{project.category}</span>
+                        <h4 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">{project.title}</h4>
+                        <p className="text-slate-500 dark:text-slate-400 leading-relaxed mb-6 line-clamp-2">{project.desc}</p>
+                        
+                        {project.link && (
+                          <a 
+                            href={project.link} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors group/link"
+                          >
+                            Lihat Proyek
+                            <ExternalLink className="w-4 h-4 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
+                          </a>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="col-span-full py-20 text-center"
+                  >
+                    <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Search className="w-8 h-8 text-slate-400" />
                     </div>
-                    <div className="px-1">
-                      <span className="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-widest mb-2 block">{project.category}</span>
-                      <h4 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">{project.title}</h4>
-                      <p className="text-slate-500 dark:text-slate-400 leading-relaxed mb-6 line-clamp-2">{project.desc}</p>
-                      
-                      {project.link && (
-                        <a 
-                          href={project.link} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors group/link"
-                        >
-                          Lihat Proyek
-                          <ExternalLink className="w-4 h-4 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
-                        </a>
-                      )}
-                    </div>
+                    <h4 className="text-xl font-bold mb-2">Tidak ada proyek ditemukan</h4>
+                    <p className="text-slate-500">Coba ganti filter atau kata kunci pencarian Anda.</p>
                   </motion.div>
-                ))}
+                )}
               </AnimatePresence>
             </motion.div>
           </div>
@@ -760,12 +977,19 @@ export default function App() {
         {/* Testimonials Section */}
         <section className="py-24 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
           <div className="container mx-auto px-6">
-            <div className="text-center max-w-3xl mx-auto mb-16">
+            <motion.div 
+              variants={fadeIn}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true }}
+              className="text-center max-w-3xl mx-auto mb-16"
+            >
               <h3 className="text-3xl font-bold mb-4 text-slate-900 dark:text-white">Apa Kata Mereka?</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-lg">
-                Kepercayaan Anda adalah prioritas kami. Berikut adalah beberapa testimoni dari klien dan kolaborator.
-              </p>
-            </div>
+              <AnimatedText 
+                text="Kepercayaan Anda adalah prioritas kami. Berikut adalah beberapa testimoni dari klien dan kolaborator."
+                className="text-slate-500 dark:text-slate-400 text-lg"
+              />
+            </motion.div>
 
             <motion.div 
               variants={staggerContainer}
@@ -802,9 +1026,11 @@ export default function App() {
                   <div className="absolute -top-4 -left-4 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                     <Quote className="w-5 h-5" />
                   </div>
-                  <p className="text-slate-600 dark:text-slate-400 mb-8 italic leading-relaxed">
-                    "{testimonial.quote}"
-                  </p>
+                  <AnimatedText 
+                    text={`"${testimonial.quote}"`}
+                    className="text-slate-600 dark:text-slate-400 mb-8 italic leading-relaxed"
+                    delay={0.2}
+                  />
                   <div className="flex items-center gap-4">
                     <img 
                       src={testimonial.image} 
@@ -824,7 +1050,7 @@ export default function App() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-24 px-6 bg-white dark:bg-slate-900 transition-colors duration-300">
+        <section id="contact" className="py-24 px-6 bg-white dark:bg-slate-900 transition-colors duration-300">
           <motion.div 
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -836,11 +1062,13 @@ export default function App() {
             
             <div className="relative z-10">
               <h3 className="text-4xl md:text-6xl font-extrabold mb-8 leading-tight">
-                Tertarik Bekerja Sama?
+                {"Tertarik Bekerja Sama?".split("").map((c, i) => <motion.span key={i} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ delay: i * 0.05 }} viewport={{ once: true }}>{c}</motion.span>)}
               </h3>
-              <p className="text-slate-400 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
-                Tersedia untuk proyek fotografi, konsultasi bisnis digital, atau layanan teknis smartphone. Mari ciptakan sesuatu yang luar biasa.
-              </p>
+              <AnimatedText 
+                text="Tersedia untuk proyek fotografi, konsultasi bisnis digital, atau layanan teknis smartphone. Mari ciptakan sesuatu yang luar biasa."
+                className="text-slate-400 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed"
+                delay={0.5}
+              />
               <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                 <button 
                   onClick={() => setIsContactModalOpen(true)}
@@ -962,8 +1190,11 @@ export default function App() {
               </button>
 
               {/* Left Side: Image Gallery */}
-              <div className="lg:w-3/5 h-[40vh] lg:h-auto bg-slate-100 dark:bg-slate-800 relative flex flex-col">
-                <div className="flex-1 relative overflow-hidden">
+              <div className="lg:w-3/5 h-[40vh] lg:h-auto bg-slate-100 dark:bg-slate-800 relative flex flex-col group/gallery">
+                <div 
+                  className="flex-1 relative overflow-hidden cursor-zoom-in"
+                  onClick={() => setZoomImage(selectedProject.image)}
+                >
                   <AnimatePresence mode="wait">
                     <motion.img 
                       key={selectedProject.image}
@@ -976,6 +1207,11 @@ export default function App() {
                       referrerPolicy="no-referrer"
                     />
                   </AnimatePresence>
+                  <div className="absolute inset-0 bg-slate-900/20 opacity-0 group-hover/gallery:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="p-4 bg-white/20 backdrop-blur-md rounded-full text-white scale-90 group-hover/gallery:scale-100 transition-transform">
+                      <ZoomIn className="w-8 h-8" />
+                    </div>
+                  </div>
                 </div>
                 
                 {/* Gallery Thumbnails */}
@@ -1108,8 +1344,12 @@ export default function App() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6 bg-slate-900/95 backdrop-blur-xl"
             onClick={() => setIsContactModalOpen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="contact-modal-title"
           >
             <motion.div
+              ref={modalRef}
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -1123,6 +1363,7 @@ export default function App() {
                 <button 
                   onClick={() => setIsContactModalOpen(false)}
                   className="absolute top-6 right-6 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all active:scale-95"
+                  aria-label="Tutup modal"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -1131,7 +1372,7 @@ export default function App() {
                   <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
                     <MessageSquare className="w-8 h-8" />
                   </div>
-                  <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">Mulai Konsultasi</h3>
+                  <h3 id="contact-modal-title" className="text-3xl font-bold text-slate-900 dark:text-white mb-3">Mulai Konsultasi</h3>
                   <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
                     Punya ide atau proyek luar biasa? Mari kita bicarakan detailnya.
                   </p>
@@ -1146,10 +1387,12 @@ export default function App() {
                   }}
                 >
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Nama Lengkap</label>
+                    <label htmlFor="full-name" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Nama Lengkap</label>
                     <div className="relative">
                       <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                       <input 
+                        id="full-name"
+                        ref={initialFocusRef}
                         type="text" 
                         required
                         placeholder="John Doe"
@@ -1159,10 +1402,11 @@ export default function App() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Email</label>
+                    <label htmlFor="email" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Email</label>
                     <div className="relative">
                       <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                       <input 
+                        id="email"
                         type="email" 
                         required
                         placeholder="john@example.com"
@@ -1172,8 +1416,9 @@ export default function App() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Kebutuhan Proyek</label>
+                    <label htmlFor="project-desc" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Kebutuhan Proyek</label>
                     <textarea 
+                      id="project-desc"
                       required
                       placeholder="Ceritakan sedikit tentang proyek Anda..."
                       rows={4}
@@ -1195,6 +1440,42 @@ export default function App() {
                 </form>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Lightbox / Zoomed Image Overlay */}
+      <AnimatePresence>
+        {zoomImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/98 backdrop-blur-2xl p-4 sm:p-20"
+            onClick={() => setZoomImage(null)}
+          >
+            <motion.button 
+              onClick={() => setZoomImage(null)}
+              className="absolute top-8 right-8 p-4 bg-white/10 hover:bg-red-500 text-white rounded-full transition-all active:scale-95 z-50 backdrop-blur-md"
+              aria-label="Tutup zoom"
+            >
+              <X className="w-8 h-8" />
+            </motion.button>
+            
+            <motion.img 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              src={zoomImage} 
+              alt="Zoomed view"
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+              referrerPolicy="no-referrer"
+            />
+            
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 px-6 py-3 bg-white/10 backdrop-blur-md rounded-2xl text-white/60 text-sm font-medium border border-white/5">
+              Klik di mana saja untuk menutup
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
